@@ -1,0 +1,33 @@
+{
+  "employees": [
+    {
+      "id": "8b0c",
+      "name": "omkar",
+      "email": "omkar@gmail.com",
+      "password": "omkar123",
+      "department": "Development"
+    },
+    {
+      "id": "a6d8",
+      "name": "vijay",
+      "email": "vijay@gmail.com",
+      "password": "vijay123",
+      "department": "Support"
+    },
+    {
+      "id": "aa64",
+      "name": "vivek s",
+      "email": "vivek@gmail.com",
+      "password": "vivek123",
+      "department": "Support"
+    },
+    {
+      "id": "322a",
+      "name": "viraj kk",
+      "email": "viraj@gmail.com",
+      "password": "viraj123",
+      "department": "Support"
+    }
+  ],
+  "users": []
+}
