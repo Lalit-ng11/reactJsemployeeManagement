@@ -1,0 +1,352 @@
+ReactJS project Commands.
+1.to start server:- npx json-server --watch db.json --port 5000
+2.to run reactjs proj:- npm start
+
+****STEP-1:
+employee-management/
+│── public/
+│── src/
+│   │── components/
+│   │   │── Navbar.js
+│   │   │── Register.js
+│   │   │── Login.js
+│   │   │── ShowData.js
+│   │   │── EditEmployee.js
+│   │── services/
+│   │   │── api.js
+│   │── context/
+│   │   │── AuthContext.js
+│   │── data/
+│   │   │── employees.json
+│   │── App.js
+│   │── index.js
+│── package.json
+│── README.md
+
+****Step-2:
+npx create-react-app employee-management
+cd employee-management
+npm install react-router-dom json-server jwt-decode
+
+***Step-3:
+db.json
+
+{
+  "employees": [],
+  "users": []
+}
+
+run server:- 
+npx json-server --watch db.json --port 5000
+
+***Step-4:-
+Navbar.js:
+
+import { Link } from "react-router-dom";
+import React from 'react'
+
+const Navbar = () => {
+  return (
+    <>   
+    <nav className="p-3 bg-success">
+      <Link to={'/register'} className="p-2 text-white ">Register</Link>
+      <Link to={'/login'} className="p-2 text-white  ">Login</Link>
+      <Link to={'/showdata'}  className="p-2 text-white  ">Show Data</Link>
+    </nav>
+    </>
+
+  )
+}
+
+export default Navbar
+
+-----API Service [api.js]
+
+const API_URL = "http://localhost:5000";
+
+// Register User 
+export const registerUser = async (userData)=>{
+    const res = await fetch(`${API_URL}/employees`,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify(userData),
+    });
+    return res.json();
+};
+
+// Login User 
+export const loginUser = async (email,password)=>{
+    const res = await fetch(`${API_URL}/employees`);
+    const users = await res.json();
+    const user = users.find(u=> u.email === email && u.password === password);
+    // Token Storage in LocalStorage 
+if (user) {
+    const token = JSON.stringify({name:user.name,email:user.email});
+    localStorage.setItem("token", token);
+    return {success:true,token};
+} else {
+    return {success:false};
+};
+};
+
+
+
+// fetch Employees 
+// const token = localStorage.getItem('token');
+export const fetchEmployees = async ()=>{
+    try {
+        const response = await fetch("http://localhost:5000/employees");
+        if(!response.ok) throw new Error('Failed to fetch Employees.');
+        const data = await response.json();
+        console.log("Fetched Employees:",data);
+        return data;
+        
+    } catch (error) {
+        console.error("API Error:", error);
+        return[];
+    }
+
+    // const res = await fetch(`${API_URL}/employees`,{
+    //     headers:{
+    //         Authorization:`Bearer ${token}`
+    //     },
+    // });
+    // if(!res.ok){
+    //     throw new Error("Failed to fetch employees..!");
+    // }
+    // return await res.json();
+}
+
+// Add Employee 
+export const addEmployee = async (employee)=>{
+    const res = await fetch(`${API_URL}/employees`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(employee)
+    });
+    return res.json();
+};
+
+// Delete Employee 
+export const deleteEmployee = async (id)=>{
+    await fetch(`${API_URL}/employees/${id}`,
+        {method:'DELETE'});
+};
+
+// Update Employee 
+export const updateEmployee = async(id,updatedData)=>{
+    await fetch(`${API_URL}/employees/${id}`,{
+        method:'PUT',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(updatedData),
+    });
+};
+
+--------Register.js
+import React from 'react';
+import { useState } from 'react';
+import {registerUser} from '../services/api';
+
+
+
+const Register = () => {
+    const [ form,setForm] = useState({name:'',email:'',password:'',department:'HR'});
+
+    const handleChange=(e)=>setForm({...form, [e.target.name]:e.target.value});
+
+    const handleSubmit = async (e)=>{
+        e.preventDefault();
+        await registerUser(form);
+        alert('Registration Successful..!');
+    }
+  return (
+    <>
+      <form onSubmit={handleSubmit} className='container'>
+        <br />
+        <input type="text" name='name' placeholder='Enter Name' required
+        onChange={handleChange} /> <br /><br />
+        <input type="email" name='email' placeholder='Enter Email' required
+        onChange={handleChange} /> <br /><br />
+        <input type="password" name='password' placeholder='Enter Password' required
+        onChange={handleChange} /> <br /><br />
+
+        <select name="department" onChange={handleChange} >
+
+            <option value="HR">HR</option>
+            <option value="Development">Development</option>
+            <option value="Support">Support</option>
+        </select> <br /><br />
+
+
+        <button className='btn btn-primary' type='submit'>Register</button>
+      </form>
+    </>
+  )
+}
+
+export default Register
+
+
+---Login.Js
+
+import React from 'react'
+import { useState } from 'react';
+import {loginUser} from '../services/api';
+
+const Login = () => {
+    const [email,setEmail]=useState("");
+    const [password,setPassword]=useState("");
+
+    const handleSubmit = async(e)=>{
+        e.preventDefault();
+        const res = await loginUser(email,password);
+        if (res.success) {
+            alert("Login Successful.!");
+        } else {
+            alert('Invalid Credentials.!');
+        }
+    }
+
+  return (
+    <>
+      <form onSubmit={handleSubmit} className='container'> 
+        <br />
+        <input type="email" placeholder='Enter Email'
+         onChange={(e)=>setEmail(e.target.value)} required/> <br /> <br />
+
+        <input type="password" placeholder='Enter Password'
+         onChange={(e)=>setPassword(e.target.value)} required/> <br /><br />
+        <button className='btn btn-primary' type='submit'>Login</button>
+      </form>
+    </>
+  )
+}
+
+export default Login
+
+
+--------ShowData.js
+
+import React from 'react';
+import { useEffect,useState } from 'react';
+import {fetchEmployees , deleteEmployee , updateEmployee} from '../services/api';
+
+
+
+const ShowData = () => {
+    const [employees , setEmployees]=useState([]);
+
+    useEffect(()=>{
+        fetchEmployees()
+        .then((data)=>{
+            console.log("Setting Employees State", data);
+            setEmployees(data);
+        }).catch((error)=>{
+            console.error(`Failed to Fetch Data..${error}`);
+        });
+    },[]);
+
+    const handleDelete = async (id)=>{
+        await deleteEmployee(id);
+        setEmployees(employees.filter(emp=>emp.id !== id));
+    }
+
+    const handleUpdate = async(id,updatedData)=>{
+        await updateEmployee(id,updatedData);
+        setEmployees(employees.map(emp=>(emp.id === id)? {...emp , 
+            ...updatedData}:emp
+        ))
+    };
+  return (
+    <section className='container'> 
+    {/* <pre>{JSON.stringify(employees,null,2)}</pre> */}
+        <table className='table table-bordered mt-3 '>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Password</th>
+                    <th>Department</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {employees.length > 0 ? (
+                    employees.map(emp=>(
+                        <tr key={emp.id}>
+                            <td>{emp.name}</td>
+                            <td>{emp.email}</td>
+                            <td>{emp.password}</td>
+                            <td>{emp.department}</td>
+                            <td>
+                                <button className='btn btn-primary me-3' onClick={()=>handleUpdate(emp)}>Edit</button>
+                                <button className='btn btn-danger' onClick={()=>handleDelete(emp.id)}>Delete</button>
+                            </td>
+
+                        </tr>
+                    ))
+                ):(
+                    <tr>
+                        <td colSpan={4} className='text-danger'>No Employees Found</td>
+                    </tr>
+                )
+            }
+
+                {/* {employees.map(emp =>(
+                    <tr key={emp.id}>
+                        <td>{emp.name}</td>
+                        <td>{emp.email}</td>
+                        <td>{emp.password}</td>
+                        <td>{emp.department}</td>
+                        <td>
+                            <button className='btn btn-primary' 
+                            onClick={()=>handleUpdate(emp)}>Edit</button>
+                            <button className='btn btn-danger'
+                            onClick={()=>handleDelete(emp.id)}>Delete</button>
+                        </td>
+                    </tr>
+                ))} */}
+
+            </tbody>
+        </table>
+    </section>
+  )
+}
+
+export default ShowData
+
+
+-----------App.js
+
+// import logo from './logo.svg';
+import './App.css';
+import { BrowserRouter as Router , Route,Routes } from 'react-router-dom';
+import Navbar from './Components/Navbar';
+import Register from './Components/Register';
+import Login from './Components/Login';
+import ShowData from './Components/ShowData';
+
+
+function App() {
+  return (
+    <>
+      <Router>
+        <Navbar/>
+
+        <Routes>
+          <Route path='/register' element={<Register />} />
+          <Route path='/login' element={<Login />}/>
+          <Route path='/showdata' element={<ShowData/>} />
+        </Routes>
+      </Router>
+    </>
+  );
+}
+
+export default App;
+
+
+----------Run Server and Project
+1.to start server:- npx json-server --watch db.json --port 5000
+2.to run reactjs proj:- npm start
